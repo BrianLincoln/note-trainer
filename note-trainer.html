@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Note Trainer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f2eb;
+    --bg2: #ede9e0;
+    --ink: #1c1a14;
+    --ink2: #6b6759;
+    --ink3: #a8a49a;
+    --accent: #2d5a3d;
+    --accent-light: #e8f0ea;
+    --danger: #8b3a2a;
+    --danger-light: #f5ece9;
+    --border: rgba(28,26,20,0.12);
+    --border2: rgba(28,26,20,0.22);
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #18170f;
+      --bg2: #221f14;
+      --ink: #f0ede4;
+      --ink2: #9a9688;
+      --ink3: #5a5750;
+      --accent: #7ab88a;
+      --accent-light: #1a2e1f;
+      --danger: #c97060;
+      --danger-light: #2a1a16;
+      --border: rgba(240,237,228,0.1);
+      --border2: rgba(240,237,228,0.2);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: 'DM Mono', monospace; }
+
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+
+  /* ── Setup screen ── */
+  .setup-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border2);
+    border-radius: 16px;
+    padding: 2.5rem;
+    max-width: 560px;
+    width: 100%;
+  }
+  .setup-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    color: var(--ink);
+    margin-bottom: 4px;
+    line-height: 1.1;
+  }
+  .setup-sub {
+    font-size: 12px;
+    color: var(--ink3);
+    margin-bottom: 2rem;
+    letter-spacing: 0.04em;
+  }
+  .setup-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 8px;
+  }
+  .clef-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .clef-btn {
+    padding: 12px 8px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--ink2);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .clef-btn:hover { border-color: var(--accent); color: var(--ink); }
+  .clef-btn.selected {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .clef-symbol { font-size: 28px; display: block; margin-bottom: 4px; line-height: 1; }
+  .midi-section { margin-bottom: 1.5rem; }
+  .midi-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .midi-name { font-size: 12px; color: var(--ink2); }
+  .midi-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink3); }
+  .midi-dot.on { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .toggle-row:hover { border-color: var(--border2); }
+  .toggle-label { font-size: 12px; color: var(--ink2); }
+  .toggle-switch {
+    width: 32px; height: 18px;
+    border-radius: 9px;
+    background: var(--border2);
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-switch.on { background: var(--accent); }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.2s;
+  }
+  .toggle-switch.on::after { left: 17px; }
+
+  .connect-link {
+    font-size: 11px;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    background: none;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    padding: 0;
+    margin-top: 6px;
+    display: block;
+  }
+  .start-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.02em;
+  }
+  .start-btn:hover { opacity: 0.9; }
+  .start-btn:active { transform: scale(0.99); }
+  .start-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Game screen ── */
+  .game-wrap {
+    max-width: 620px;
+    width: 100%;
+  }
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+  .back-btn {
+    font-size: 11px;
+    color: var(--ink3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+    padding: 0;
+  }
+  .back-btn:hover { color: var(--ink2); }
+  .stats {
+    display: flex;
+    gap: 1.5rem;
+  }
+  .stat { text-align: right; }
+  .stat-n { font-size: 20px; font-weight: 500; color: var(--ink); }
+  .stat-l { font-size: 10px; color: var(--ink3); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .staff-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border2);
+    border-radius: 14px;
+    padding: 2rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1rem;
+    min-height: 240px;
+    justify-content: center;
+  }
+  .clef-tag {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 1.25rem;
+  }
+  canvas { display: block; max-width: 100%; }
+  .reveal-row {
+    margin-top: 1.25rem;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .note-name-reveal {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--ink);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .note-name-reveal.show { opacity: 1; }
+  .octave-hint { font-size: 11px; color: var(--ink3); }
+
+  .feedback-bar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    border-radius: var(--radius);
+    margin-bottom: 0.75rem;
+    transition: background 0.2s, color 0.2s;
+    color: var(--ink3);
+  }
+  .feedback-bar.correct { background: var(--accent-light); color: var(--accent); }
+  .feedback-bar.wrong { background: var(--danger-light); color: var(--danger); }
+
+  .streak-bar {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+  .streak-pip {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border2);
+    transition: background 0.2s;
+  }
+  .streak-pip.lit { background: var(--accent); }
+
+  .note-btns {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .note-btn {
+    min-width: 38px;
+    padding: 10px 8px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--bg2);
+    color: var(--ink2);
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .note-btn:hover { border-color: var(--accent); color: var(--ink); }
+  .note-btn:active { transform: scale(0.95); background: var(--accent-light); }
+</style>
+</head>
+<body>
+
+<!-- Setup Screen -->
+<div class="screen active" id="screen-setup">
+  <div class="setup-card">
+    <h1 class="setup-title">Note<br>Trainer</h1>
+    <p class="setup-sub">sight reading · staff drill</p>
+
+    <p class="setup-label">Clef</p>
+    <div class="clef-options">
+      <button class="clef-btn" id="clef-treble" onclick="selectClef('treble')">
+        <span class="clef-symbol">𝄞</span>treble
+      </button>
+      <button class="clef-btn" id="clef-bass" onclick="selectClef('bass')">
+        <span class="clef-symbol">𝄢</span>bass
+      </button>
+      <button class="clef-btn selected" id="clef-both" onclick="selectClef('both')">
+        <span class="clef-symbol">𝄞𝄢</span>both
+      </button>
+    </div>
+
+    <p class="setup-label">MIDI keyboard</p>
+    <div class="midi-section">
+      <div class="midi-row">
+        <span class="midi-name" id="midi-name">not connected</span>
+        <span class="midi-dot" id="midi-dot"></span>
+      </div>
+      <button class="connect-link" onclick="connectMidi()">connect keyboard →</button>
+    </div>
+
+    <div class="toggle-row" onclick="toggleOctave()">
+      <span class="toggle-label">match octave</span>
+      <span class="toggle-switch" id="octave-toggle"></span>
+    </div>
+
+    <button class="start-btn" id="start-btn" onclick="startGame()">start →</button>
+  </div>
+</div>
+
+<!-- Game Screen -->
+<div class="screen" id="screen-game">
+  <div class="game-wrap">
+    <div class="top-bar">
+      <button class="back-btn" onclick="goBack()">← back</button>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-n" id="s-streak">0</div>
+          <div class="stat-l">streak</div>
+        </div>
+        <div class="stat">
+          <div class="stat-n" id="s-correct">0</div>
+          <div class="stat-l">correct</div>
+        </div>
+        <div class="stat">
+          <div class="stat-n" id="s-wrong">0</div>
+          <div class="stat-l">wrong</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="staff-card">
+      <p class="clef-tag" id="clef-tag">bass clef</p>
+      <canvas id="staff"></canvas>
+      <div class="reveal-row">
+        <span class="note-name-reveal" id="note-reveal"></span>
+        <span class="octave-hint" id="octave-hint"></span>
+      </div>
+    </div>
+
+    <div class="feedback-bar" id="feedback">play the note shown above</div>
+
+    <div class="streak-bar" id="streak-bar">
+      <!-- 10 pips -->
+    </div>
+
+    <div class="note-btns" id="note-btns" style="display:none">
+      <button class="note-btn" onclick="handleButtonPress('C')">C</button>
+      <button class="note-btn" onclick="handleButtonPress('D')">D</button>
+      <button class="note-btn" onclick="handleButtonPress('E')">E</button>
+      <button class="note-btn" onclick="handleButtonPress('F')">F</button>
+      <button class="note-btn" onclick="handleButtonPress('G')">G</button>
+      <button class="note-btn" onclick="handleButtonPress('A')">A</button>
+      <button class="note-btn" onclick="handleButtonPress('B')">B</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Note data ──────────────────────────────────────────────
+const BASS = [
+  {name:'G2',midi:43,pos:1},   // bottom line
+  {name:'A2',midi:45,pos:1.5},
+  {name:'B2',midi:47,pos:2},
+  {name:'C3',midi:48,pos:2.5},
+  {name:'D3',midi:50,pos:3},   // middle line
+  {name:'E3',midi:52,pos:3.5},
+  {name:'F3',midi:53,pos:4},
+  {name:'G3',midi:55,pos:4.5},
+  {name:'A3',midi:57,pos:5},   // top line
+  {name:'B3',midi:59,pos:5.5},
+  {name:'C4',midi:60,pos:6},   // middle C, first ledger above
+];
+const TREBLE = [
+  {name:'C4',midi:60,pos:0},   // middle C, ledger below
+  {name:'D4',midi:62,pos:0.5},
+  {name:'E4',midi:64,pos:1},   // bottom line
+  {name:'F4',midi:65,pos:1.5},
+  {name:'G4',midi:67,pos:2},
+  {name:'A4',midi:69,pos:2.5},
+  {name:'B4',midi:71,pos:3},
+  {name:'C5',midi:72,pos:3.5},
+  {name:'D5',midi:74,pos:4},
+  {name:'E5',midi:76,pos:4.5},
+  {name:'F5',midi:77,pos:5},   // top line
+];
+
+// ── State ──────────────────────────────────────────────────
+let clefMode = 'both';
+let enforceOctave = false;
+let midiConnected = false;
+let currentNote = null;
+let correct = 0, wrong = 0, streak = 0;
+let waitingForNext = false;
+let audioCtx = null;
+
+// ── Setup ──────────────────────────────────────────────────
+function toggleOctave() {
+  enforceOctave = !enforceOctave;
+  document.getElementById('octave-toggle').classList.toggle('on', enforceOctave);
+}
+
+function selectClef(c) {
+  clefMode = c;
+  ['treble','bass','both'].forEach(x =>
+    document.getElementById('clef-'+x).classList.toggle('selected', x===c)
+  );
+}
+
+async function connectMidi(silent = false) {
+  if (!navigator.requestMIDIAccess) {
+    if (!silent) document.getElementById('midi-name').textContent = 'not supported in this browser';
+    return;
+  }
+  try {
+    const access = await navigator.requestMIDIAccess();
+    const inputs = [...access.inputs.values()];
+    if (!inputs.length) {
+      if (!silent) document.getElementById('midi-name').textContent = 'no devices found — plug in first';
+      return;
+    }
+    inputs.forEach(i => i.onmidimessage = onMidi);
+    midiConnected = true;
+    document.getElementById('midi-name').textContent = inputs[0].name || 'keyboard connected';
+    document.getElementById('midi-dot').classList.add('on');
+  } catch(e) {
+    if (!silent) document.getElementById('midi-name').textContent = 'access denied';
+  }
+}
+
+function startGame() {
+  correct = 0; wrong = 0; streak = 0;
+  updateStats();
+  buildStreakPips();
+  document.getElementById('note-btns').style.display = midiConnected ? 'none' : 'flex';
+  showScreen('game');
+  nextNote();
+}
+
+function handleButtonPress(letter) {
+  if (!currentNote || waitingForNext) return;
+  const target = currentNote.name[0];
+  if (letter === target) {
+    handleCorrect();
+  } else {
+    handleWrong(letter);
+  }
+}
+
+function goBack() {
+  currentNote = null;
+  waitingForNext = false;
+  showScreen('setup');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+
+// ── Game ───────────────────────────────────────────────────
+function getPool() {
+  if (clefMode === 'treble') return TREBLE;
+  if (clefMode === 'bass') return BASS;
+  return [...BASS.filter(n => n.name !== 'C4'), ...TREBLE];
+}
+
+function nextNote() {
+  waitingForNext = false;
+  const pool = getPool();
+  let n;
+  do { n = pool[Math.floor(Math.random() * pool.length)]; }
+  while (pool.length > 1 && n === currentNote);
+  currentNote = n;
+
+  const isBass = BASS.includes(n);
+  document.getElementById('clef-tag').textContent = isBass ? 'bass clef' : 'treble clef';
+  drawNote(n, isBass);
+
+  document.getElementById('note-reveal').classList.remove('show');
+  document.getElementById('note-reveal').textContent = '';
+  document.getElementById('octave-hint').textContent = '';
+  setFeedback('play the note shown above', '');
+}
+
+function onMidi(event) {
+  const [status, note, velocity] = event.data;
+  if ((status & 0xf0) !== 0x90 || velocity === 0) return;
+
+  // Free play on setup screen — just audition the note
+  if (!document.getElementById('screen-game').classList.contains('active')) {
+    playTone(note, true);
+    return;
+  }
+
+  if (!currentNote || waitingForNext) return;
+
+  const isCorrect = enforceOctave
+    ? note === currentNote.midi
+    : midiNoteName(note) === midiNoteName(currentNote.midi);
+  const playedLabel = enforceOctave ? midiFullName(note) : midiNoteName(note);
+
+  if (isCorrect) {
+    handleCorrect();
+  } else {
+    handleWrong(playedLabel);
+  }
+}
+
+function midiNoteName(midi) {
+  return ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][midi % 12];
+}
+
+function midiFullName(midi) {
+  const letter = midiNoteName(midi);
+  const octave = Math.floor(midi / 12) - 1;
+  return letter + octave;
+}
+
+function handleCorrect() {
+  correct++;
+  streak++;
+  updateStats();
+  revealNote();
+  playTone(currentNote.midi, true);
+  setFeedback('✓ correct', 'correct');
+  waitingForNext = true;
+  setTimeout(nextNote, 1100);
+}
+
+function handleWrong(played) {
+  wrong++;
+  streak = 0;
+  updateStats();
+  revealNote();
+  playTone(currentNote.midi, false);
+  setFeedback('✗  you played ' + played + ' — this is ' + currentNote.name, 'wrong');
+  waitingForNext = true;
+  setTimeout(nextNote, 1800);
+}
+
+function revealNote() {
+  const el = document.getElementById('note-reveal');
+  el.textContent = currentNote.name;
+  el.classList.add('show');
+  document.getElementById('octave-hint').textContent = '';
+}
+
+function setFeedback(msg, cls) {
+  const el = document.getElementById('feedback');
+  el.textContent = msg;
+  el.className = 'feedback-bar ' + cls;
+}
+
+function updateStats() {
+  document.getElementById('s-correct').textContent = correct;
+  document.getElementById('s-wrong').textContent = wrong;
+  document.getElementById('s-streak').textContent = streak;
+  updatePips();
+}
+
+function buildStreakPips() {
+  const bar = document.getElementById('streak-bar');
+  bar.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const d = document.createElement('div');
+    d.className = 'streak-pip';
+    d.id = 'pip-'+i;
+    bar.appendChild(d);
+  }
+}
+
+function updatePips() {
+  for (let i = 0; i < 10; i++) {
+    const p = document.getElementById('pip-'+i);
+    if (p) p.classList.toggle('lit', i < streak);
+  }
+}
+
+// ── Audio ─────────────────────────────────────────────────
+function playTone(midi, correct) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const freq = 440 * Math.pow(2, (midi - 69) / 12);
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (correct ? 0.9 : 0.3));
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + (correct ? 0.9 : 0.3));
+  } catch(e) {}
+}
+
+// ── Staff drawing ──────────────────────────────────────────
+function drawNote(note, isBass) {
+  const canvas = document.getElementById('staff');
+
+  // Size canvas to fill the staff-card's inner width
+  const card = canvas.closest('.staff-card');
+  const style = getComputedStyle(card);
+  const innerW = card.clientWidth
+    - parseFloat(style.paddingLeft)
+    - parseFloat(style.paddingRight);
+  const W = Math.max(innerW, 160);
+  const s = W / 300; // scale factor relative to 300px base design
+  const H = Math.round(150 * s);
+  canvas.width = W;
+  canvas.height = H;
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const ink = dark ? '#f0ede4' : '#1c1a14';
+
+  const staffTop = 32 * s;
+  const ls     = 13 * s;
+  const left   = 62 * s;
+  const w      = 196 * s;
+  const bottomLine = staffTop + 4 * ls;
+  const noteX  = left + w / 2 + 14 * s;
+  const rx = 7 * s, ry = 5.5 * s;
+
+  // Staff lines — same color as notes/clef
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 0.8 * s;
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(left, staffTop + i * ls);
+    ctx.lineTo(left + w, staffTop + i * ls);
+    ctx.stroke();
+  }
+
+  // Clef
+  ctx.fillStyle = ink;
+  if (isBass) {
+    ctx.font = `${Math.round(46 * s)}px serif`;
+    ctx.fillText('𝄢', left - 46 * s, staffTop + 34 * s);
+  } else {
+    ctx.font = `${Math.round(62 * s)}px serif`;
+    ctx.fillText('𝄞', left - 42 * s, staffTop + 50 * s);
+  }
+
+  // Note Y position (pos 1 = bottom line, pos 5 = top line)
+  const noteY = bottomLine - (note.pos - 1) * ls;
+
+  // Ledger lines
+  ctx.lineWidth = 1 * s;
+  if (note.pos <= 0.5) {
+    ctx.beginPath();
+    ctx.moveTo(noteX - rx - 5 * s, bottomLine + ls);
+    ctx.lineTo(noteX + rx + 5 * s, bottomLine + ls);
+    ctx.stroke();
+  }
+  if (note.pos >= 6) {
+    ctx.beginPath();
+    ctx.moveTo(noteX - rx - 5 * s, staffTop - ls);
+    ctx.lineTo(noteX + rx + 5 * s, staffTop - ls);
+    ctx.stroke();
+  }
+
+  // Note head
+  ctx.beginPath();
+  ctx.ellipse(noteX, noteY, rx, ry, -0.15, 0, Math.PI * 2);
+  ctx.fillStyle = ink;
+  ctx.fill();
+
+  // Stem
+  const stemDir = note.pos < 3 ? -1 : 1;
+  const stemX = stemDir === 1 ? noteX - rx + 1 * s : noteX + rx - 1 * s;
+  ctx.beginPath();
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 1.4 * s;
+  ctx.moveTo(stemX, noteY);
+  ctx.lineTo(stemX, noteY + stemDir * ls * 3.2);
+  ctx.stroke();
+}
+
+// ── Init ───────────────────────────────────────────────────
+function redrawCurrent() {
+  if (currentNote) drawNote(currentNote, BASS.includes(currentNote));
+}
+window.addEventListener('resize', redrawCurrent);
+
+buildStreakPips();
+connectMidi(true); // auto-connect on load if permission already granted
+</script>
+</body>
+</html>
