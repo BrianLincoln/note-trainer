@@ -11,7 +11,7 @@
     --bg2: #ede9e0;
     --ink: #1c1a14;
     --ink2: #6b6759;
-    --ink3: #a8a49a;
+    --ink3: #706e68;
     --accent: #2d5a3d;
     --accent-light: #e8f0ea;
     --danger: #8b3a2a;
@@ -26,7 +26,7 @@
       --bg2: #221f14;
       --ink: #f0ede4;
       --ink2: #9a9688;
-      --ink3: #5a5750;
+      --ink3: #908e88;
       --accent: #7ab88a;
       --accent-light: #1a2e1f;
       --danger: #c97060;
@@ -646,10 +646,11 @@ function drawPiano(activePc = -1) {
 
   const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const inkCol    = dark ? '#f0ede4' : '#1c1a14';
-  const whiteFill = dark ? '#2a2718' : '#ffffff';
-  const blackFill = dark ? '#0d0c08' : '#1c1a14';
-  const sepCol    = dark ? '#3a3520' : '#ccc8bc';
-  const labelCol  = dark ? '#4a4840' : '#ccc8bc';
+  const whiteFill  = dark ? '#3e3c2c' : '#ffffff';
+  const blackFill  = dark ? '#0a0906' : '#1c1a14';
+  const sepCol     = dark ? '#1a1810' : '#a8a49a';
+  const labelCol   = dark ? '#8a8880' : '#6b6759';    // white-key labels
+  const bLabelCol  = dark ? '#706e68' : '#9a9490';    // black-key labels
   const accentCol = dark ? '#7ab88a' : '#2d5a3d';
 
   // White keys
@@ -684,7 +685,7 @@ function drawPiano(activePc = -1) {
       ctx.font = `${fs}px 'DM Mono', monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
-      ctx.fillStyle = active ? 'rgba(255,255,255,0.85)' : (dark ? '#4a4840' : '#5a5750');
+      ctx.fillStyle = active ? 'rgba(255,255,255,0.85)' : bLabelCol;
       ctx.fillText(BLACK_LABEL[i],  x + bw / 2, bh - fs - 3);
       ctx.fillText(BLACK_LABEL2[i], x + bw / 2, bh - 2);
     }
