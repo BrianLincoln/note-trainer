@@ -277,8 +277,9 @@
   .streak-pip.lit { background: var(--accent); }
 
   .piano-wrap {
+    width: min(calc(100vw - 4rem), 1080px);
     margin-top: 1rem;
-    border-radius: var(--radius);
+    border-radius: 5px;
     overflow: hidden;
     cursor: pointer;
     user-select: none;
@@ -436,8 +437,8 @@
       <!-- 10 pips -->
     </div>
 
-    <div class="piano-wrap"><canvas id="piano"></canvas></div>
   </div>
+  <div class="piano-wrap"><canvas id="piano"></canvas></div>
 </div>
 
 <!-- Summary Screen -->
@@ -631,7 +632,7 @@ const BLACK_LABEL2 = ['D♭','E♭','G♭','A♭','B♭'];
 function drawPiano(activePc = -1) {
   const canvas = document.getElementById('piano');
   if (!canvas) return;
-  const wrap = document.querySelector('.game-wrap');
+  const wrap = canvas.parentElement;
   const W = Math.max(wrap ? wrap.clientWidth : 300, 200);
   const ww = Math.floor(W / 7);
   const wh = 120;
