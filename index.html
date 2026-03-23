@@ -513,23 +513,43 @@ const TREBLE = [
 ];
 
 // ── Accidental note data ────────────────────────────────────
+// Sharps sit on the natural note they sharpen (G# on the G line)
 const BASS_ACC = [
-  {name:'G#2',midi:44,pos:1,acc:'#'},
+  {name:'G#2',midi:44,pos:1,  acc:'#'},
   {name:'A#2',midi:46,pos:1.5,acc:'#'},
   {name:'C#3',midi:49,pos:2.5,acc:'#'},
-  {name:'D#3',midi:51,pos:3,acc:'#'},
-  {name:'F#3',midi:54,pos:4,acc:'#'},
+  {name:'D#3',midi:51,pos:3,  acc:'#'},
+  {name:'F#3',midi:54,pos:4,  acc:'#'},
   {name:'G#3',midi:56,pos:4.5,acc:'#'},
-  {name:'A#3',midi:58,pos:5,acc:'#'},
+  {name:'A#3',midi:58,pos:5,  acc:'#'},
 ];
 const TREBLE_ACC = [
-  {name:'C#4',midi:61,pos:0,acc:'#'},
+  {name:'C#4',midi:61,pos:0,  acc:'#'},
   {name:'D#4',midi:63,pos:0.5,acc:'#'},
   {name:'F#4',midi:66,pos:1.5,acc:'#'},
-  {name:'G#4',midi:68,pos:2,acc:'#'},
+  {name:'G#4',midi:68,pos:2,  acc:'#'},
   {name:'A#4',midi:70,pos:2.5,acc:'#'},
   {name:'C#5',midi:73,pos:3.5,acc:'#'},
-  {name:'D#5',midi:75,pos:4,acc:'#'},
+  {name:'D#5',midi:75,pos:4,  acc:'#'},
+];
+// Flats sit on the natural note they flatten (Ab on the A line) — same midi, different position
+const BASS_FLAT = [
+  {name:'Ab2',midi:44,pos:1.5,acc:'b'},
+  {name:'Bb2',midi:46,pos:2,  acc:'b'},
+  {name:'Db3',midi:49,pos:3,  acc:'b'},
+  {name:'Eb3',midi:51,pos:3.5,acc:'b'},
+  {name:'Gb3',midi:54,pos:4.5,acc:'b'},
+  {name:'Ab3',midi:56,pos:5,  acc:'b'},
+  {name:'Bb3',midi:58,pos:5.5,acc:'b'},
+];
+const TREBLE_FLAT = [
+  {name:'Db4',midi:61,pos:0.5,acc:'b'},
+  {name:'Eb4',midi:63,pos:1,  acc:'b'},
+  {name:'Gb4',midi:66,pos:2,  acc:'b'},
+  {name:'Ab4',midi:68,pos:2.5,acc:'b'},
+  {name:'Bb4',midi:70,pos:3,  acc:'b'},
+  {name:'Db5',midi:73,pos:4,  acc:'b'},
+  {name:'Eb5',midi:75,pos:4.5,acc:'b'},
 ];
 
 // ── State ──────────────────────────────────────────────────
@@ -608,28 +628,30 @@ function playAgain() {
   startGame();
 }
 
-function handleButtonPress(noteName) {
+function handleButtonPress(pitchClass, label) {
   if (!currentNote || waitingForNext) return;
-  // Strip trailing digits to get the note name without octave: "C#4" → "C#", "C4" → "C"
-  const target = currentNote.name.replace(/\d+$/, '');
-  if (noteName === target) {
+  if (currentNote.midi % 12 === pitchClass) {
     handleCorrect();
   } else {
-    handleWrong(noteName);
+    handleWrong(label);
   }
 }
 
 function buildNoteButtons() {
   const container = document.getElementById('note-btns');
   container.innerHTML = '';
-  const notes = includeAccidentals
-    ? ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
-    : ['C','D','E','F','G','A','B'];
-  notes.forEach(n => {
+  // Each entry: [display label, midi pitch class]
+  const natural = [['C',0],['D',2],['E',4],['F',5],['G',7],['A',9],['B',11]];
+  const chromatic = [
+    ['C',0],['C♯/D♭',1],['D',2],['D♯/E♭',3],['E',4],
+    ['F',5],['F♯/G♭',6],['G',7],['G♯/A♭',8],['A',9],['A♯/B♭',10],['B',11]
+  ];
+  const btns = includeAccidentals ? chromatic : natural;
+  btns.forEach(([label, pc]) => {
     const btn = document.createElement('button');
     btn.className = 'note-btn';
-    btn.textContent = n.replace('#', '♯');
-    btn.onclick = () => handleButtonPress(n);
+    btn.textContent = label;
+    btn.onclick = () => handleButtonPress(pc, label);
     container.appendChild(btn);
   });
 }
@@ -648,14 +670,14 @@ function showScreen(id) {
 // ── Game ───────────────────────────────────────────────────
 function getPool() {
   if (clefMode === 'treble') {
-    return includeAccidentals ? [...TREBLE, ...TREBLE_ACC] : TREBLE;
+    return includeAccidentals ? [...TREBLE, ...TREBLE_ACC, ...TREBLE_FLAT] : TREBLE;
   }
   if (clefMode === 'bass') {
-    return includeAccidentals ? [...BASS, ...BASS_ACC] : BASS;
+    return includeAccidentals ? [...BASS, ...BASS_ACC, ...BASS_FLAT] : BASS;
   }
   const bassNotes = BASS.filter(n => n.name !== 'C4');
   if (includeAccidentals) {
-    return [...bassNotes, ...BASS_ACC, ...TREBLE, ...TREBLE_ACC];
+    return [...bassNotes, ...BASS_ACC, ...BASS_FLAT, ...TREBLE, ...TREBLE_ACC, ...TREBLE_FLAT];
   }
   return [...bassNotes, ...TREBLE];
 }
@@ -668,7 +690,7 @@ function nextNote() {
   while (pool.length > 1 && n === currentNote);
   currentNote = n;
 
-  const isBass = BASS.includes(n) || BASS_ACC.includes(n);
+  const isBass = BASS.includes(n) || BASS_ACC.includes(n) || BASS_FLAT.includes(n);
   document.getElementById('clef-tag').textContent = isBass ? 'bass clef' : 'treble clef';
   drawNote(n, isBass);
 
@@ -910,7 +932,7 @@ function drawNote(note, isBass) {
 
 // ── Init ───────────────────────────────────────────────────
 function redrawCurrent() {
-  if (currentNote) drawNote(currentNote, BASS.includes(currentNote) || BASS_ACC.includes(currentNote));
+  if (currentNote) drawNote(currentNote, BASS.includes(currentNote) || BASS_ACC.includes(currentNote) || BASS_FLAT.includes(currentNote));
 }
 window.addEventListener('resize', redrawCurrent);
 
