@@ -276,27 +276,13 @@
   }
   .streak-pip.lit { background: var(--accent); }
 
-  .note-btns {
-    display: flex;
-    gap: 6px;
-    justify-content: center;
-    margin-top: 0.75rem;
-    flex-wrap: wrap;
-  }
-  .note-btn {
-    min-width: 38px;
-    padding: 10px 8px;
-    border: 0.5px solid var(--border2);
+  .piano-wrap {
+    margin-top: 1rem;
     border-radius: var(--radius);
-    background: var(--bg2);
-    color: var(--ink2);
-    font-family: 'DM Serif Display', serif;
-    font-size: 17px;
+    overflow: hidden;
     cursor: pointer;
-    transition: all 0.1s;
+    user-select: none;
   }
-  .note-btn:hover { border-color: var(--accent); color: var(--ink); }
-  .note-btn:active { transform: scale(0.95); background: var(--accent-light); }
 
   /* ── Summary screen ── */
   .summary-score {
@@ -450,7 +436,7 @@
       <!-- 10 pips -->
     </div>
 
-    <div class="note-btns" id="note-btns"></div>
+    <div class="piano-wrap"><canvas id="piano"></canvas></div>
   </div>
 </div>
 
@@ -572,7 +558,6 @@ function toggleOctave() {
 function toggleAccidentals() {
   includeAccidentals = !includeAccidentals;
   document.getElementById('acc-toggle').classList.toggle('on', includeAccidentals);
-  buildNoteButtons();
 }
 
 function selectCount(n) {
@@ -616,8 +601,6 @@ function startGame() {
   correct = 0; wrong = 0; streak = 0; questionCount = 0; bestStreak = 0;
   updateStats();
   buildStreakPips();
-  buildNoteButtons();
-  document.getElementById('note-btns').style.display = 'flex';
   const qc = document.getElementById('q-counter');
   qc.textContent = questionLimit ? '0 / ' + questionLimit : '';
   showScreen('game');
@@ -637,23 +620,102 @@ function handleButtonPress(pitchClass, label) {
   }
 }
 
-function buildNoteButtons() {
-  const container = document.getElementById('note-btns');
-  container.innerHTML = '';
-  // Each entry: [display label, midi pitch class]
-  const natural = [['C',0],['D',2],['E',4],['F',5],['G',7],['A',9],['B',11]];
-  const chromatic = [
-    ['C',0],['C♯/D♭',1],['D',2],['D♯/E♭',3],['E',4],
-    ['F',5],['F♯/G♭',6],['G',7],['G♯/A♭',8],['A',9],['A♯/B♭',10],['B',11]
-  ];
-  const btns = includeAccidentals ? chromatic : natural;
-  btns.forEach(([label, pc]) => {
-    const btn = document.createElement('button');
-    btn.className = 'note-btn';
-    btn.textContent = label;
-    btn.onclick = () => handleButtonPress(pc, label);
-    container.appendChild(btn);
-  });
+// ── Piano ───────────────────────────────────────────────────
+const WHITE_PC    = [0, 2, 4, 5, 7, 9, 11];
+const WHITE_LABEL = ['C','D','E','F','G','A','B'];
+const BLACK_OFFSET = [0.67, 1.67, 3.67, 4.67, 5.67];
+const BLACK_PC     = [1, 3, 6, 8, 10];
+const BLACK_LABEL  = ['C♯','D♯','F♯','G♯','A♯'];
+const BLACK_LABEL2 = ['D♭','E♭','G♭','A♭','B♭'];
+
+function drawPiano(activePc = -1) {
+  const canvas = document.getElementById('piano');
+  if (!canvas) return;
+  const wrap = document.querySelector('.game-wrap');
+  const W = Math.max(wrap ? wrap.clientWidth : 300, 200);
+  const ww = Math.floor(W / 7);
+  const wh = 120;
+  const bw = Math.round(ww * 0.58);
+  const bh = Math.round(wh * 0.62);
+  canvas.width  = W;
+  canvas.height = wh;
+  canvas._ww = ww; canvas._bw = bw; canvas._bh = bh; // store for click detection
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, wh);
+
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const inkCol    = dark ? '#f0ede4' : '#1c1a14';
+  const whiteFill = dark ? '#2a2718' : '#ffffff';
+  const blackFill = dark ? '#0d0c08' : '#1c1a14';
+  const sepCol    = dark ? '#3a3520' : '#ccc8bc';
+  const labelCol  = dark ? '#4a4840' : '#ccc8bc';
+  const accentCol = dark ? '#7ab88a' : '#2d5a3d';
+
+  // White keys
+  for (let i = 0; i < 7; i++) {
+    const x = i * ww;
+    const active = WHITE_PC[i] === activePc;
+    ctx.fillStyle = active ? accentCol : whiteFill;
+    ctx.fillRect(x, 0, ww - 1, wh);
+    ctx.strokeStyle = sepCol;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, 0.5, ww - 2, wh - 1);
+    // note label
+    ctx.fillStyle = active ? 'rgba(255,255,255,0.75)' : labelCol;
+    ctx.font = `${Math.max(9, Math.round(ww * 0.22))}px 'DM Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(WHITE_LABEL[i], x + (ww - 1) / 2, wh - 5);
+  }
+
+  // Black keys
+  for (let i = 0; i < 5; i++) {
+    const x = Math.round(BLACK_OFFSET[i] * ww - bw / 2);
+    const active = BLACK_PC[i] === activePc;
+    ctx.fillStyle = active ? accentCol : blackFill;
+    ctx.fillRect(x, 0, bw, bh);
+    // round the bottom corners slightly
+    ctx.fillStyle = active ? accentCol : blackFill;
+    ctx.fillRect(x, bh - 6, bw, 6);
+    // enharmonic labels (two lines)
+    if (bw >= 16) {
+      const fs = Math.max(7, Math.round(bw * 0.26));
+      ctx.font = `${fs}px 'DM Mono', monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = active ? 'rgba(255,255,255,0.85)' : (dark ? '#4a4840' : '#5a5750');
+      ctx.fillText(BLACK_LABEL[i],  x + bw / 2, bh - fs - 3);
+      ctx.fillText(BLACK_LABEL2[i], x + bw / 2, bh - 2);
+    }
+  }
+}
+
+function pianoClickHandler(e) {
+  const canvas = document.getElementById('piano');
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const ww = canvas._ww || 1;
+  const bw = canvas._bw || 1;
+  const bh = canvas._bh || 1;
+
+  // Black keys first (only when click is in the upper portion)
+  if (y <= bh) {
+    for (let i = 0; i < 5; i++) {
+      const bx = Math.round(BLACK_OFFSET[i] * ww - bw / 2);
+      if (x >= bx && x <= bx + bw) {
+        const label = BLACK_LABEL[i] + '/' + BLACK_LABEL2[i];
+        drawPiano(BLACK_PC[i]);
+        handleButtonPress(BLACK_PC[i], label);
+        return;
+      }
+    }
+  }
+  // White keys
+  const idx = Math.min(Math.floor(x / ww), 6);
+  drawPiano(WHITE_PC[idx]);
+  handleButtonPress(WHITE_PC[idx], WHITE_LABEL[idx]);
 }
 
 function goBack() {
@@ -693,6 +755,7 @@ function nextNote() {
   const isBass = BASS.includes(n) || BASS_ACC.includes(n) || BASS_FLAT.includes(n);
   document.getElementById('clef-tag').textContent = isBass ? 'bass clef' : 'treble clef';
   drawNote(n, isBass);
+  drawPiano();
 
   document.getElementById('note-reveal').classList.remove('show');
   document.getElementById('note-reveal').textContent = '';
@@ -709,6 +772,9 @@ function onMidi(event) {
     playTone(note, true);
     return;
   }
+
+  // Light up the key on the piano
+  drawPiano(note % 12);
 
   if (!currentNote || waitingForNext) return;
 
@@ -932,12 +998,16 @@ function drawNote(note, isBass) {
 
 // ── Init ───────────────────────────────────────────────────
 function redrawCurrent() {
-  if (currentNote) drawNote(currentNote, BASS.includes(currentNote) || BASS_ACC.includes(currentNote) || BASS_FLAT.includes(currentNote));
+  if (currentNote) {
+    drawNote(currentNote, BASS.includes(currentNote) || BASS_ACC.includes(currentNote) || BASS_FLAT.includes(currentNote));
+    drawPiano();
+  }
 }
 window.addEventListener('resize', redrawCurrent);
 
+document.getElementById('piano').addEventListener('click', pianoClickHandler);
+
 buildStreakPips();
-buildNoteButtons();
 connectMidi(true); // auto-connect on load if permission already granted
 </script>
 </body>
