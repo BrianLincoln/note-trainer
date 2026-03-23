@@ -321,6 +321,11 @@
       <button class="connect-link" onclick="connectMidi()">connect keyboard →</button>
     </div>
 
+    <div class="toggle-row" onclick="toggleAccidentals()">
+      <span class="toggle-label">sharps &amp; flats</span>
+      <span class="toggle-switch" id="acc-toggle"></span>
+    </div>
+
     <div class="toggle-row" onclick="toggleOctave()">
       <span class="toggle-label">match octave</span>
       <span class="toggle-switch" id="octave-toggle"></span>
@@ -366,15 +371,7 @@
       <!-- 10 pips -->
     </div>
 
-    <div class="note-btns" id="note-btns" style="display:none">
-      <button class="note-btn" onclick="handleButtonPress('C')">C</button>
-      <button class="note-btn" onclick="handleButtonPress('D')">D</button>
-      <button class="note-btn" onclick="handleButtonPress('E')">E</button>
-      <button class="note-btn" onclick="handleButtonPress('F')">F</button>
-      <button class="note-btn" onclick="handleButtonPress('G')">G</button>
-      <button class="note-btn" onclick="handleButtonPress('A')">A</button>
-      <button class="note-btn" onclick="handleButtonPress('B')">B</button>
-    </div>
+    <div class="note-btns" id="note-btns" style="display:none"></div>
   </div>
 </div>
 
@@ -407,9 +404,30 @@ const TREBLE = [
   {name:'F5',midi:77,pos:5},   // top line
 ];
 
+// ── Accidental note data ────────────────────────────────────
+const BASS_ACC = [
+  {name:'G#2',midi:44,pos:1,acc:'#'},
+  {name:'A#2',midi:46,pos:1.5,acc:'#'},
+  {name:'C#3',midi:49,pos:2.5,acc:'#'},
+  {name:'D#3',midi:51,pos:3,acc:'#'},
+  {name:'F#3',midi:54,pos:4,acc:'#'},
+  {name:'G#3',midi:56,pos:4.5,acc:'#'},
+  {name:'A#3',midi:58,pos:5,acc:'#'},
+];
+const TREBLE_ACC = [
+  {name:'C#4',midi:61,pos:0,acc:'#'},
+  {name:'D#4',midi:63,pos:0.5,acc:'#'},
+  {name:'F#4',midi:66,pos:1.5,acc:'#'},
+  {name:'G#4',midi:68,pos:2,acc:'#'},
+  {name:'A#4',midi:70,pos:2.5,acc:'#'},
+  {name:'C#5',midi:73,pos:3.5,acc:'#'},
+  {name:'D#5',midi:75,pos:4,acc:'#'},
+];
+
 // ── State ──────────────────────────────────────────────────
 let clefMode = 'both';
 let enforceOctave = false;
+let includeAccidentals = false;
 let midiConnected = false;
 let currentNote = null;
 let correct = 0, wrong = 0, streak = 0;
@@ -420,6 +438,12 @@ let audioCtx = null;
 function toggleOctave() {
   enforceOctave = !enforceOctave;
   document.getElementById('octave-toggle').classList.toggle('on', enforceOctave);
+}
+
+function toggleAccidentals() {
+  includeAccidentals = !includeAccidentals;
+  document.getElementById('acc-toggle').classList.toggle('on', includeAccidentals);
+  buildNoteButtons();
 }
 
 function selectClef(c) {
@@ -454,19 +478,36 @@ function startGame() {
   correct = 0; wrong = 0; streak = 0;
   updateStats();
   buildStreakPips();
+  buildNoteButtons();
   document.getElementById('note-btns').style.display = midiConnected ? 'none' : 'flex';
   showScreen('game');
   nextNote();
 }
 
-function handleButtonPress(letter) {
+function handleButtonPress(noteName) {
   if (!currentNote || waitingForNext) return;
-  const target = currentNote.name[0];
-  if (letter === target) {
+  // Strip trailing digits to get the note name without octave: "C#4" → "C#", "C4" → "C"
+  const target = currentNote.name.replace(/\d+$/, '');
+  if (noteName === target) {
     handleCorrect();
   } else {
-    handleWrong(letter);
+    handleWrong(noteName);
   }
+}
+
+function buildNoteButtons() {
+  const container = document.getElementById('note-btns');
+  container.innerHTML = '';
+  const notes = includeAccidentals
+    ? ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
+    : ['C','D','E','F','G','A','B'];
+  notes.forEach(n => {
+    const btn = document.createElement('button');
+    btn.className = 'note-btn';
+    btn.textContent = n.replace('#', '♯');
+    btn.onclick = () => handleButtonPress(n);
+    container.appendChild(btn);
+  });
 }
 
 function goBack() {
@@ -482,9 +523,17 @@ function showScreen(id) {
 
 // ── Game ───────────────────────────────────────────────────
 function getPool() {
-  if (clefMode === 'treble') return TREBLE;
-  if (clefMode === 'bass') return BASS;
-  return [...BASS.filter(n => n.name !== 'C4'), ...TREBLE];
+  if (clefMode === 'treble') {
+    return includeAccidentals ? [...TREBLE, ...TREBLE_ACC] : TREBLE;
+  }
+  if (clefMode === 'bass') {
+    return includeAccidentals ? [...BASS, ...BASS_ACC] : BASS;
+  }
+  const bassNotes = BASS.filter(n => n.name !== 'C4');
+  if (includeAccidentals) {
+    return [...bassNotes, ...BASS_ACC, ...TREBLE, ...TREBLE_ACC];
+  }
+  return [...bassNotes, ...TREBLE];
 }
 
 function nextNote() {
@@ -685,6 +734,18 @@ function drawNote(note, isBass) {
     ctx.stroke();
   }
 
+  // Accidental (sharp/flat) to the left of note head
+  if (note.acc) {
+    const accChar = note.acc === '#' ? '♯' : '♭';
+    ctx.font = `bold ${Math.round(15 * s)}px serif`;
+    ctx.fillStyle = ink;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(accChar, noteX - rx - 3 * s, noteY);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
   // Note head
   ctx.beginPath();
   ctx.ellipse(noteX, noteY, rx, ry, -0.15, 0, Math.PI * 2);
@@ -709,6 +770,7 @@ function redrawCurrent() {
 window.addEventListener('resize', redrawCurrent);
 
 buildStreakPips();
+buildNoteButtons();
 connectMidi(true); // auto-connect on load if permission already granted
 </script>
 </body>
