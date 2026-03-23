@@ -665,7 +665,7 @@ function drawPiano(activePc = -1) {
     ctx.strokeRect(x + 0.5, 0.5, ww - 2, wh - 1);
     // note label
     ctx.fillStyle = active ? 'rgba(255,255,255,0.75)' : labelCol;
-    ctx.font = `${Math.max(9, Math.round(ww * 0.22))}px 'DM Mono', monospace`;
+    ctx.font = `${Math.min(12, Math.max(9, Math.round(ww * 0.22)))}px 'DM Mono', monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.fillText(WHITE_LABEL[i], x + (ww - 1) / 2, wh - 5);
@@ -682,7 +682,7 @@ function drawPiano(activePc = -1) {
     ctx.fillRect(x, bh - 6, bw, 6);
     // enharmonic labels (two lines)
     if (bw >= 16) {
-      const fs = Math.max(7, Math.round(bw * 0.26));
+      const fs = Math.min(10, Math.max(7, Math.round(bw * 0.26)));
       ctx.font = `${fs}px 'DM Mono', monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
