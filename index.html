@@ -646,11 +646,11 @@ function drawPiano(activePc = -1) {
 
   const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const inkCol    = dark ? '#f0ede4' : '#1c1a14';
-  const whiteFill  = dark ? '#3e3c2c' : '#ffffff';
+  const whiteFill  = dark ? '#e8e4d8' : '#ffffff';
   const blackFill  = dark ? '#0a0906' : '#1c1a14';
-  const sepCol     = dark ? '#1a1810' : '#a8a49a';
-  const labelCol   = dark ? '#8a8880' : '#6b6759';    // white-key labels
-  const bLabelCol  = dark ? '#706e68' : '#9a9490';    // black-key labels
+  const sepCol     = dark ? '#b8b4a8' : '#a8a49a';
+  const labelCol   = dark ? '#2a2818' : '#3a3830';    // dark text on light keys
+  const bLabelCol  = dark ? '#9a9890' : '#9a9490';    // light text on dark keys
   const accentCol = dark ? '#7ab88a' : '#2d5a3d';
 
   // White keys
