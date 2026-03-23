@@ -185,15 +185,23 @@
   }
   .back-btn {
     font-size: 11px;
-    color: var(--ink3);
-    background: none;
-    border: none;
+    color: var(--ink2);
+    background: var(--bg2);
+    border: 0.5px solid var(--border2);
+    border-radius: 20px;
     cursor: pointer;
     font-family: 'DM Mono', monospace;
     letter-spacing: 0.05em;
-    padding: 0;
+    padding: 6px 14px;
+    transition: all 0.15s;
+    flex-shrink: 0;
   }
-  .back-btn:hover { color: var(--ink2); }
+  .back-btn:hover { border-color: var(--ink3); color: var(--ink); }
+  .q-counter {
+    font-size: 12px;
+    color: var(--ink3);
+    letter-spacing: 0.06em;
+  }
   .stats {
     display: flex;
     gap: 1.5rem;
@@ -289,6 +297,68 @@
   }
   .note-btn:hover { border-color: var(--accent); color: var(--ink); }
   .note-btn:active { transform: scale(0.95); background: var(--accent-light); }
+
+  /* ── Summary screen ── */
+  .summary-score {
+    text-align: center;
+    padding: 1.75rem 0 1.25rem;
+  }
+  .summary-big {
+    font-family: 'DM Serif Display', serif;
+    font-size: 58px;
+    color: var(--ink);
+    display: block;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .summary-unit {
+    font-size: 11px;
+    color: var(--ink3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .summary-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .summary-stat {
+    text-align: center;
+    padding: 14px 8px;
+    background: var(--bg);
+  }
+  .summary-btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .secondary-btn {
+    padding: 13px;
+    background: var(--bg);
+    color: var(--ink2);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    font-family: 'DM Serif Display', serif;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .secondary-btn:hover { border-color: var(--ink3); color: var(--ink); }
+
+  /* ── Count picker (reuses clef-btn styles) ── */
+  .count-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .count-options .clef-btn { font-size: 15px; padding: 10px 8px; }
 </style>
 </head>
 <body>
@@ -310,6 +380,14 @@
       <button class="clef-btn selected" id="clef-both" onclick="selectClef('both')">
         <span class="clef-symbol">𝄞𝄢</span>both
       </button>
+    </div>
+
+    <p class="setup-label">Questions</p>
+    <div class="count-options">
+      <button class="clef-btn" id="count-5"   onclick="selectCount(5)">5</button>
+      <button class="clef-btn" id="count-10"  onclick="selectCount(10)">10</button>
+      <button class="clef-btn" id="count-20"  onclick="selectCount(20)">20</button>
+      <button class="clef-btn selected" id="count-inf" onclick="selectCount(null)">∞</button>
     </div>
 
     <p class="setup-label">MIDI keyboard</p>
@@ -340,6 +418,7 @@
   <div class="game-wrap">
     <div class="top-bar">
       <button class="back-btn" onclick="goBack()">← back</button>
+      <span class="q-counter" id="q-counter"></span>
       <div class="stats">
         <div class="stat">
           <div class="stat-n" id="s-streak">0</div>
@@ -372,6 +451,35 @@
     </div>
 
     <div class="note-btns" id="note-btns"></div>
+  </div>
+</div>
+
+<!-- Summary Screen -->
+<div class="screen" id="screen-summary">
+  <div class="setup-card">
+    <p class="setup-sub" style="margin-bottom:0">session complete</p>
+    <div class="summary-score">
+      <span class="summary-big" id="sum-score">—</span>
+      <span class="summary-unit" id="sum-pct"></span>
+    </div>
+    <div class="summary-stats">
+      <div class="summary-stat">
+        <div class="stat-n" id="sum-correct">0</div>
+        <div class="stat-l">correct</div>
+      </div>
+      <div class="summary-stat">
+        <div class="stat-n" id="sum-wrong">0</div>
+        <div class="stat-l">wrong</div>
+      </div>
+      <div class="summary-stat">
+        <div class="stat-n" id="sum-streak">0</div>
+        <div class="stat-l">best streak</div>
+      </div>
+    </div>
+    <div class="summary-btn-row">
+      <button class="secondary-btn" onclick="goBack()">← menu</button>
+      <button class="start-btn" onclick="playAgain()">play again →</button>
+    </div>
   </div>
 </div>
 
@@ -428,9 +536,10 @@ const TREBLE_ACC = [
 let clefMode = 'both';
 let enforceOctave = false;
 let includeAccidentals = false;
+let questionLimit = null; // null = infinite
 let midiConnected = false;
 let currentNote = null;
-let correct = 0, wrong = 0, streak = 0;
+let correct = 0, wrong = 0, streak = 0, questionCount = 0, bestStreak = 0;
 let waitingForNext = false;
 let audioCtx = null;
 
@@ -444,6 +553,15 @@ function toggleAccidentals() {
   includeAccidentals = !includeAccidentals;
   document.getElementById('acc-toggle').classList.toggle('on', includeAccidentals);
   buildNoteButtons();
+}
+
+function selectCount(n) {
+  questionLimit = n;
+  const opts = [5, 10, 20, null];
+  opts.forEach(v => {
+    const el = document.getElementById('count-' + (v === null ? 'inf' : v));
+    if (el) el.classList.toggle('selected', v === n);
+  });
 }
 
 function selectClef(c) {
@@ -475,13 +593,19 @@ async function connectMidi(silent = false) {
 }
 
 function startGame() {
-  correct = 0; wrong = 0; streak = 0;
+  correct = 0; wrong = 0; streak = 0; questionCount = 0; bestStreak = 0;
   updateStats();
   buildStreakPips();
   buildNoteButtons();
   document.getElementById('note-btns').style.display = 'flex';
+  const qc = document.getElementById('q-counter');
+  qc.textContent = questionLimit ? '0 / ' + questionLimit : '';
   showScreen('game');
   nextNote();
+}
+
+function playAgain() {
+  startGame();
 }
 
 function handleButtonPress(noteName) {
@@ -544,7 +668,7 @@ function nextNote() {
   while (pool.length > 1 && n === currentNote);
   currentNote = n;
 
-  const isBass = BASS.includes(n);
+  const isBass = BASS.includes(n) || BASS_ACC.includes(n);
   document.getElementById('clef-tag').textContent = isBass ? 'bass clef' : 'treble clef';
   drawNote(n, isBass);
 
@@ -591,23 +715,41 @@ function midiFullName(midi) {
 function handleCorrect() {
   correct++;
   streak++;
+  questionCount++;
+  if (streak > bestStreak) bestStreak = streak;
   updateStats();
   revealNote();
   playTone(currentNote.midi, true);
   setFeedback('✓ correct', 'correct');
   waitingForNext = true;
-  setTimeout(nextNote, 1100);
+  const done = questionLimit && questionCount >= questionLimit;
+  setTimeout(done ? showSummary : nextNote, 1100);
 }
 
 function handleWrong(played) {
   wrong++;
   streak = 0;
+  questionCount++;
   updateStats();
   revealNote();
   playTone(currentNote.midi, false);
   setFeedback('✗  you played ' + played + ' — this is ' + currentNote.name, 'wrong');
   waitingForNext = true;
-  setTimeout(nextNote, 1800);
+  const done = questionLimit && questionCount >= questionLimit;
+  setTimeout(done ? showSummary : nextNote, 1800);
+}
+
+function showSummary() {
+  currentNote = null;
+  waitingForNext = false;
+  const total = correct + wrong;
+  const pct = total ? Math.round(correct / total * 100) : 0;
+  document.getElementById('sum-score').textContent = correct + ' / ' + total;
+  document.getElementById('sum-pct').textContent = pct + '% correct';
+  document.getElementById('sum-correct').textContent = correct;
+  document.getElementById('sum-wrong').textContent = wrong;
+  document.getElementById('sum-streak').textContent = bestStreak;
+  showScreen('summary');
 }
 
 function revealNote() {
@@ -627,6 +769,9 @@ function updateStats() {
   document.getElementById('s-correct').textContent = correct;
   document.getElementById('s-wrong').textContent = wrong;
   document.getElementById('s-streak').textContent = streak;
+  if (questionLimit) {
+    document.getElementById('q-counter').textContent = questionCount + ' / ' + questionLimit;
+  }
   updatePips();
 }
 
@@ -765,7 +910,7 @@ function drawNote(note, isBass) {
 
 // ── Init ───────────────────────────────────────────────────
 function redrawCurrent() {
-  if (currentNote) drawNote(currentNote, BASS.includes(currentNote));
+  if (currentNote) drawNote(currentNote, BASS.includes(currentNote) || BASS_ACC.includes(currentNote));
 }
 window.addEventListener('resize', redrawCurrent);
 
