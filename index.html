@@ -371,7 +371,7 @@
       <!-- 10 pips -->
     </div>
 
-    <div class="note-btns" id="note-btns" style="display:none"></div>
+    <div class="note-btns" id="note-btns"></div>
   </div>
 </div>
 
@@ -479,7 +479,7 @@ function startGame() {
   updateStats();
   buildStreakPips();
   buildNoteButtons();
-  document.getElementById('note-btns').style.display = midiConnected ? 'none' : 'flex';
+  document.getElementById('note-btns').style.display = 'flex';
   showScreen('game');
   nextNote();
 }
