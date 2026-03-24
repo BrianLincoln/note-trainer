@@ -435,10 +435,6 @@
   .exercise-name { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--ink); }
   .exercise-desc { font-size: 11px; color: var(--ink3); }
 
-  /* ── Setup sections ── */
-  .setup-section--note-reading.hidden,
-  .setup-section--key-sig.hidden { display: none; }
-
   /* ── Key scope selector ── */
   .scope-options {
     display: grid;

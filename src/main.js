@@ -24,11 +24,11 @@ function showScreen(id) {
 
 function showSetupFor(exercise) {
   currentExercise = exercise;
-  document.querySelector('.setup-section--note-reading')
-    .classList.toggle('hidden', exercise !== 'noteReading');
-  document.querySelector('.setup-section--key-sig')
-    .classList.toggle('hidden', exercise !== 'keySig');
-  document.querySelector('.setup-sub').textContent =
+  document.querySelector('.setup-section--note-reading').style.display =
+    exercise === 'noteReading' ? '' : 'none';
+  document.querySelector('.setup-section--key-sig').style.display =
+    exercise === 'keySig' ? '' : 'none';
+  document.querySelector('#screen-setup .setup-sub').textContent =
     exercise === 'noteReading' ? 'sight reading · staff drill' : 'key signature · identification';
   const midiConnected = document.getElementById('midi-dot').classList.contains('on');
   document.getElementById('octave-row').style.display =
