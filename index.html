@@ -694,6 +694,12 @@ async function connectMidi(silent = false) {
     if (!silent) document.getElementById('midi-name').textContent = 'not supported in this browser';
     return;
   }
+  if (silent && navigator.permissions) {
+    try {
+      const perm = await navigator.permissions.query({ name: 'midi', sysex: false });
+      if (perm.state !== 'granted') return;
+    } catch(e) { /* permissions API unavailable, fall through */ }
+  }
   try {
     const access = await navigator.requestMIDIAccess();
     const inputs = [...access.inputs.values()];
