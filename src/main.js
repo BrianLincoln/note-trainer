@@ -28,6 +28,8 @@ function showSetupFor(exercise) {
     exercise === 'noteReading' ? '' : 'none';
   document.querySelector('.setup-section--key-sig').style.display =
     exercise === 'keySig' ? '' : 'none';
+  document.querySelector('#screen-setup .setup-title').innerHTML =
+    exercise === 'noteReading' ? 'Note<br>Reading' : 'Key<br>Signatures';
   document.querySelector('#screen-setup .setup-sub').textContent =
     exercise === 'noteReading' ? 'sight reading · staff drill' : 'key signature · identification';
   const midiConnected = document.getElementById('midi-dot').classList.contains('on');
