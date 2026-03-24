@@ -849,7 +849,7 @@ function handleWrong(played) {
   questionCount++;
   updateStats();
   revealNote();
-  playTone(currentNote.midi, false);
+  playWrongSound();
   setFeedback('✗  you played ' + played + ' — this is ' + currentNote.name, 'wrong');
   waitingForNext = true;
   const done = questionLimit && questionCount >= questionLimit;
@@ -911,6 +911,26 @@ function updatePips() {
 }
 
 // ── Audio ─────────────────────────────────────────────────
+function playWrongSound() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = audioCtx.currentTime;
+    // Two descending "duh duh" notes — E4 then C#4 (minor third), sawtooth for buzz
+    [[330, 0], [277, 0.19]].forEach(([freq, delay]) => {
+      const osc  = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, t + delay);
+      gain.gain.setValueAtTime(0.11, t + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.22);
+      osc.start(t + delay);
+      osc.stop(t + delay + 0.23);
+    });
+  } catch(e) {}
+}
+
 function playTone(midi, correct) {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
