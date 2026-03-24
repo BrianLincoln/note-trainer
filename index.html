@@ -376,13 +376,13 @@
 
     <p class="setup-label">Clef</p>
     <div class="clef-options">
-      <button class="clef-btn" id="clef-treble" onclick="selectClef('treble')">
+      <button class="clef-btn selected" id="clef-treble" onclick="selectClef('treble')">
         <span class="clef-symbol">𝄞</span>treble
       </button>
       <button class="clef-btn" id="clef-bass" onclick="selectClef('bass')">
         <span class="clef-symbol">𝄢</span>bass
       </button>
-      <button class="clef-btn selected" id="clef-both" onclick="selectClef('both')">
+      <button class="clef-btn" id="clef-both" onclick="selectClef('both')">
         <span class="clef-symbol">𝄞𝄢</span>both
       </button>
     </div>
@@ -390,9 +390,14 @@
     <p class="setup-label">Questions</p>
     <div class="count-options">
       <button class="clef-btn" id="count-5"   onclick="selectCount(5)">5</button>
-      <button class="clef-btn" id="count-10"  onclick="selectCount(10)">10</button>
+      <button class="clef-btn selected" id="count-10"  onclick="selectCount(10)">10</button>
       <button class="clef-btn" id="count-20"  onclick="selectCount(20)">20</button>
-      <button class="clef-btn selected" id="count-inf" onclick="selectCount(null)">∞</button>
+      <button class="clef-btn" id="count-inf" onclick="selectCount(null)">∞</button>
+    </div>
+
+    <div class="toggle-row" onclick="toggleAccidentals()">
+      <span class="toggle-label">sharps &amp; flats</span>
+      <span class="toggle-switch" id="acc-toggle"></span>
     </div>
 
     <p class="setup-label">MIDI keyboard</p>
@@ -404,12 +409,7 @@
       <button class="connect-link" onclick="connectMidi()">connect keyboard →</button>
     </div>
 
-    <div class="toggle-row" onclick="toggleAccidentals()">
-      <span class="toggle-label">sharps &amp; flats</span>
-      <span class="toggle-switch" id="acc-toggle"></span>
-    </div>
-
-    <div class="toggle-row" onclick="toggleOctave()">
+    <div class="toggle-row" id="octave-row" style="display:none" onclick="toggleOctave()">
       <span class="toggle-label">match octave</span>
       <span class="toggle-switch" id="octave-toggle"></span>
     </div>
@@ -558,10 +558,10 @@ const TREBLE_FLAT = [
 ];
 
 // ── State ──────────────────────────────────────────────────
-let clefMode = 'both';
+let clefMode = 'treble';
 let enforceOctave = false;
 let includeAccidentals = false;
-let questionLimit = null; // null = infinite
+let questionLimit = 10;
 let midiConnected = false;
 let currentNote = null;
 let correct = 0, wrong = 0, streak = 0, questionCount = 0, bestStreak = 0;
@@ -612,6 +612,7 @@ async function connectMidi(silent = false) {
     midiConnected = true;
     document.getElementById('midi-name').textContent = inputs[0].name || 'keyboard connected';
     document.getElementById('midi-dot').classList.add('on');
+    document.getElementById('octave-row').style.display = '';
   } catch(e) {
     if (!silent) document.getElementById('midi-name').textContent = 'access denied';
   }
