@@ -283,6 +283,8 @@
   }
   .streak-pip.lit { background: var(--accent); }
 
+  #piano.labels-hidden .pk-label { visibility: hidden; }
+
   .piano-wrap {
     width: 100%;
     max-width: 620px;

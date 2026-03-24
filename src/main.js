@@ -10,6 +10,7 @@ let clefMode = 'treble';
 let questionLimit = 10;
 let includeAccidentals = false;
 let keyScope = 'sharps';
+let showNoteNames = true;
 
 // ── Exercise routing ─────────────────────────────────────────
 let currentExercise = null;
@@ -93,6 +94,13 @@ function selectScope(s) {
 document.getElementById('scope-sharps').addEventListener('click', () => selectScope('sharps'));
 document.getElementById('scope-flats').addEventListener('click',  () => selectScope('flats'));
 document.getElementById('scope-both').addEventListener('click',   () => selectScope('both'));
+
+// ── Setup: Note names toggle (shared) ────────────────────────
+document.getElementById('note-names-row').addEventListener('click', () => {
+  showNoteNames = !showNoteNames;
+  document.getElementById('note-names-toggle').classList.toggle('on', showNoteNames);
+  document.getElementById('piano').classList.toggle('labels-hidden', !showNoteNames);
+});
 
 // ── Setup: Octave toggle (note reading + MIDI only) ──────────
 document.getElementById('octave-row').addEventListener('click', noteReadingExercise.toggleOctave);
