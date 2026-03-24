@@ -16,7 +16,7 @@ export function playWrongSound() {
       osc.start(t + delay);
       osc.stop(t + delay + 0.23);
     });
-  } catch(e) {}
+  } catch { /* ignore — audio failure is non-fatal */ }
 }
 
 export function playTone(midi, correct) {
@@ -33,5 +33,5 @@ export function playTone(midi, correct) {
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (correct ? 0.9 : 0.3));
     osc.start(audioCtx.currentTime);
     osc.stop(audioCtx.currentTime + (correct ? 0.9 : 0.3));
-  } catch(e) {}
+  } catch { /* ignore — audio failure is non-fatal */ }
 }

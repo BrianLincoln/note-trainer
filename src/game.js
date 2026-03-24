@@ -1,16 +1,17 @@
-import { BASS, TREBLE, BASS_ACC, TREBLE_ACC, BASS_FLAT, TREBLE_FLAT } from './notes.js';
+import { BASS, BASS_ACC, BASS_FLAT } from './notes.js';
 import { playTone, playWrongSound } from './audio.js';
 import { drawNote } from './staff.js';
 import { drawPiano } from './piano.js';
+import { midiNoteName, midiFullName, getPool } from './theory.js';
+import { initialState, applyCorrect, applyWrong, isSessionDone, summaryStats } from './gameState.js';
 
 // ── State ──────────────────────────────────────────────────
 let clefMode = 'treble';
 let enforceOctave = false;
 let includeAccidentals = false;
 let questionLimit = 10;
-let midiConnected = false;
 let currentNote = null;
-let correct = 0, wrong = 0, streak = 0, questionCount = 0, bestStreak = 0;
+let state = initialState();
 let waitingForNext = false;
 let lastPlayedPc = -1;
 
@@ -50,7 +51,7 @@ export async function connectMidi(silent = false) {
     try {
       const perm = await navigator.permissions.query({ name: 'midi', sysex: false });
       if (perm.state !== 'granted') return;
-    } catch(e) { /* permissions API unavailable, fall through */ }
+    } catch { /* permissions API unavailable, fall through */ }
   }
   try {
     const access = await navigator.requestMIDIAccess();
@@ -60,17 +61,16 @@ export async function connectMidi(silent = false) {
       return;
     }
     inputs.forEach(i => i.onmidimessage = onMidi);
-    midiConnected = true;
     document.getElementById('midi-name').textContent = inputs[0].name || 'keyboard connected';
     document.getElementById('midi-dot').classList.add('on');
     document.getElementById('octave-row').style.display = '';
-  } catch(e) {
+  } catch {
     if (!silent) document.getElementById('midi-name').textContent = 'access denied';
   }
 }
 
 export function startGame() {
-  correct = 0; wrong = 0; streak = 0; questionCount = 0; bestStreak = 0;
+  state = initialState();
   updateStats();
   buildStreakPips();
   const qc = document.getElementById('q-counter');
@@ -114,23 +114,9 @@ export function showScreen(id) {
 }
 
 // ── Game ───────────────────────────────────────────────────
-function getPool() {
-  if (clefMode === 'treble') {
-    return includeAccidentals ? [...TREBLE, ...TREBLE_ACC, ...TREBLE_FLAT] : TREBLE;
-  }
-  if (clefMode === 'bass') {
-    return includeAccidentals ? [...BASS, ...BASS_ACC, ...BASS_FLAT] : BASS;
-  }
-  const bassNotes = BASS.filter(n => n.name !== 'C4');
-  if (includeAccidentals) {
-    return [...bassNotes, ...BASS_ACC, ...BASS_FLAT, ...TREBLE, ...TREBLE_ACC, ...TREBLE_FLAT];
-  }
-  return [...bassNotes, ...TREBLE];
-}
-
 function nextNote() {
   waitingForNext = false;
-  const pool = getPool();
+  const pool = getPool(clefMode, includeAccidentals);
   let n;
   do { n = pool[Math.floor(Math.random() * pool.length)]; }
   while (pool.length > 1 && n === currentNote);
@@ -173,34 +159,19 @@ function onMidi(event) {
   }
 }
 
-function midiNoteName(midi) {
-  return ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][midi % 12];
-}
-
-function midiFullName(midi) {
-  const letter = midiNoteName(midi);
-  const octave = Math.floor(midi / 12) - 1;
-  return letter + octave;
-}
-
 function handleCorrect() {
-  correct++;
-  streak++;
-  questionCount++;
-  if (streak > bestStreak) bestStreak = streak;
+  state = applyCorrect(state);
   updateStats();
   revealNote();
   playTone(currentNote.midi, true);
   setFeedback('✓ correct', 'correct');
   waitingForNext = true;
-  const done = questionLimit && questionCount >= questionLimit;
+  const done = isSessionDone(state, questionLimit);
   setTimeout(done ? showSummary : nextNote, 1100);
 }
 
 function handleWrong(played) {
-  wrong++;
-  streak = 0;
-  questionCount++;
+  state = applyWrong(state);
   updateStats();
   revealNote();
   playWrongSound();
@@ -215,20 +186,19 @@ function handleWrong(played) {
   setTimeout(() => drawPiano(-1, wpc),        900);
   setTimeout(() => drawPiano(correctPc, wpc), 1200);
 
-  const done = questionLimit && questionCount >= questionLimit;
+  const done = isSessionDone(state, questionLimit);
   setTimeout(done ? showSummary : nextNote, 1800);
 }
 
 function showSummary() {
   currentNote = null;
   waitingForNext = false;
-  const total = correct + wrong;
-  const pct = total ? Math.round(correct / total * 100) : 0;
-  document.getElementById('sum-score').textContent = correct + ' / ' + total;
+  const { total, pct } = summaryStats(state);
+  document.getElementById('sum-score').textContent = state.correct + ' / ' + total;
   document.getElementById('sum-pct').textContent = pct + '% correct';
-  document.getElementById('sum-correct').textContent = correct;
-  document.getElementById('sum-wrong').textContent = wrong;
-  document.getElementById('sum-streak').textContent = bestStreak;
+  document.getElementById('sum-correct').textContent = state.correct;
+  document.getElementById('sum-wrong').textContent = state.wrong;
+  document.getElementById('sum-streak').textContent = state.bestStreak;
   showScreen('summary');
 }
 
@@ -246,11 +216,11 @@ function setFeedback(msg, cls) {
 }
 
 function updateStats() {
-  document.getElementById('s-correct').textContent = correct;
-  document.getElementById('s-wrong').textContent = wrong;
-  document.getElementById('s-streak').textContent = streak;
+  document.getElementById('s-correct').textContent = state.correct;
+  document.getElementById('s-wrong').textContent = state.wrong;
+  document.getElementById('s-streak').textContent = state.streak;
   if (questionLimit) {
-    document.getElementById('q-counter').textContent = questionCount + ' / ' + questionLimit;
+    document.getElementById('q-counter').textContent = state.questionCount + ' / ' + questionLimit;
   }
   updatePips();
 }
@@ -269,7 +239,7 @@ export function buildStreakPips() {
 function updatePips() {
   for (let i = 0; i < 10; i++) {
     const p = document.getElementById('pip-'+i);
-    if (p) p.classList.toggle('lit', i < streak);
+    if (p) p.classList.toggle('lit', i < state.streak);
   }
 }
 
