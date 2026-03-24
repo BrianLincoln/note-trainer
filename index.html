@@ -282,8 +282,84 @@
     margin-top: 1rem;
     border-radius: 5px;
     overflow: hidden;
-    cursor: pointer;
     user-select: none;
+    position: relative;
+    height: 120px;
+  }
+  .piano-white-keys {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+  .piano-key-white {
+    flex: 1;
+    background: #ffffff;
+    border-right: 1px solid #a8a49a;
+    border-radius: 0 0 3px 3px;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 5px;
+    box-sizing: border-box;
+    transition: background 0.08s;
+  }
+  .piano-key-white:last-child { border-right: none; }
+  .piano-key-white .pk-label {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(9px, 2.2cqw, 18px);
+    color: #3a3830;
+    pointer-events: none;
+    line-height: 1;
+  }
+  .piano-key-white.pk-active  { background: #2d5a3d; }
+  .piano-key-white.pk-active .pk-label { color: rgba(255,255,255,0.85); }
+  .piano-key-white.pk-wrong   { background: #c0392b; }
+  .piano-key-white.pk-wrong .pk-label  { color: rgba(255,255,255,0.85); }
+
+  .piano-black-keys {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .piano-key-black {
+    position: absolute;
+    top: 0;
+    width: 10%;          /* overridden inline */
+    height: 62%;
+    background: #1c1a14;
+    border-radius: 0 0 3px 3px;
+    cursor: pointer;
+    pointer-events: all;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 4px;
+    box-sizing: border-box;
+    gap: 1px;
+    transition: background 0.08s;
+  }
+  .piano-key-black .pk-label {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(7px, 1.6cqw, 11px);
+    color: rgba(255,255,255,0.85);
+    pointer-events: none;
+    line-height: 1.1;
+    text-align: center;
+  }
+  .piano-key-black.pk-active  { background: #2d5a3d; }
+  .piano-key-black.pk-wrong   { background: #c0392b; }
+
+  @media (prefers-color-scheme: dark) {
+    .piano-key-white            { background: #e8e4d8; border-color: #b8b4a8; }
+    .piano-key-white .pk-label  { color: #2a2818; }
+    .piano-key-white.pk-active  { background: #7ab88a; }
+    .piano-key-black            { background: #0a0906; }
+    .piano-key-black.pk-active  { background: #7ab88a; }
+    .piano-key-black.pk-wrong   { background: #c97060; }
+    .piano-key-white.pk-wrong   { background: #c97060; }
   }
 
   /* ── Summary screen ── */
@@ -456,7 +532,24 @@
     </div>
 
   </div>
-  <div class="piano-wrap"><canvas id="piano"></canvas></div>
+  <div class="piano-wrap" id="piano">
+    <div class="piano-white-keys">
+      <div class="piano-key-white" data-pc="0"><span class="pk-label">C</span></div>
+      <div class="piano-key-white" data-pc="2"><span class="pk-label">D</span></div>
+      <div class="piano-key-white" data-pc="4"><span class="pk-label">E</span></div>
+      <div class="piano-key-white" data-pc="5"><span class="pk-label">F</span></div>
+      <div class="piano-key-white" data-pc="7"><span class="pk-label">G</span></div>
+      <div class="piano-key-white" data-pc="9"><span class="pk-label">A</span></div>
+      <div class="piano-key-white" data-pc="11"><span class="pk-label">B</span></div>
+    </div>
+    <div class="piano-black-keys">
+      <div class="piano-key-black" data-pc="1"  data-label="C♯/D♭" style="left:calc(1/7*100% - 5%);width:10%;"><span class="pk-label">C♯</span><span class="pk-label">D♭</span></div>
+      <div class="piano-key-black" data-pc="3"  data-label="D♯/E♭" style="left:calc(2/7*100% - 5%);width:10%;"><span class="pk-label">D♯</span><span class="pk-label">E♭</span></div>
+      <div class="piano-key-black" data-pc="6"  data-label="F♯/G♭" style="left:calc(4/7*100% - 5%);width:10%;"><span class="pk-label">F♯</span><span class="pk-label">G♭</span></div>
+      <div class="piano-key-black" data-pc="8"  data-label="G♯/A♭" style="left:calc(5/7*100% - 5%);width:10%;"><span class="pk-label">G♯</span><span class="pk-label">A♭</span></div>
+      <div class="piano-key-black" data-pc="10" data-label="A♯/B♭" style="left:calc(6/7*100% - 5%);width:10%;"><span class="pk-label">A♯</span><span class="pk-label">B♭</span></div>
+    </div>
+  </div>
 </div>
 
 <!-- Summary Screen -->
@@ -651,106 +744,20 @@ const BLACK_LABEL  = ['C♯','D♯','F♯','G♯','A♯'];
 const BLACK_LABEL2 = ['D♭','E♭','G♭','A♭','B♭'];
 
 function drawPiano(activePc = -1, wrongPc = -1) {
-  const canvas = document.getElementById('piano');
-  if (!canvas) return;
-  const wrap = canvas.parentElement;
-  const W = Math.max(wrap ? wrap.clientWidth : 300, 200);
-  const ww = W / 7;           // float — pixel-perfect positions via rounding per key
-  const wh = 120;
-  const bw = Math.round(ww * 0.58);
-  const bh = Math.round(wh * 0.62);
-  canvas.width  = W;
-  canvas.height = wh;
-  canvas.style.width  = W + 'px'; // match CSS display size exactly so no overflow
-  canvas._ww = ww; canvas._bw = bw; canvas._bh = bh;
-
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, W, wh);
-
-  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const inkCol    = dark ? '#f0ede4' : '#1c1a14';
-  const whiteFill  = dark ? '#e8e4d8' : '#ffffff';
-  const blackFill  = dark ? '#0a0906' : '#1c1a14';
-  const sepCol     = dark ? '#b8b4a8' : '#a8a49a';
-  const labelCol   = dark ? '#2a2818' : '#3a3830';    // dark text on light keys
-  const bLabelCol  = dark ? '#9a9890' : '#9a9490';    // light text on dark keys
-  const accentCol = dark ? '#7ab88a' : '#2d5a3d';
-  const wrongCol  = dark ? '#c97060' : '#c0392b';
-
-  // White keys — round each key edge independently so they sum exactly to W
-  for (let i = 0; i < 7; i++) {
-    const x  = Math.round(i * ww);
-    const x1 = Math.round((i + 1) * ww);
-    const kw = x1 - x; // actual pixel width of this key
-    const active  = WHITE_PC[i] === activePc;
-    const isWrong = WHITE_PC[i] === wrongPc;
-    ctx.fillStyle = isWrong ? wrongCol : (active ? accentCol : whiteFill);
-    ctx.fillRect(x, 0, kw, wh);
-    // right-edge separator (skip on last key)
-    if (i < 6) {
-      ctx.strokeStyle = sepCol;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x1 - 0.5, 0);
-      ctx.lineTo(x1 - 0.5, wh);
-      ctx.stroke();
-    }
-    // note label
-    ctx.fillStyle = (active || isWrong) ? 'rgba(255,255,255,0.85)' : labelCol;
-    ctx.font = `${Math.min(18, Math.max(9, Math.round(ww * 0.22)))}px 'DM Mono', monospace`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.fillText(WHITE_LABEL[i], x + kw / 2, wh - 5);
-  }
-
-  // Black keys
-  for (let i = 0; i < 5; i++) {
-    const x = Math.round(BLACK_OFFSET[i] * ww - bw / 2);
-    const active  = BLACK_PC[i] === activePc;
-    const isWrong = BLACK_PC[i] === wrongPc;
-    const bFill = isWrong ? wrongCol : (active ? accentCol : blackFill);
-    ctx.fillStyle = bFill;
-    ctx.fillRect(x, 0, bw, bh);
-    // round the bottom corners slightly
-    ctx.fillRect(x, bh - 6, bw, 6);
-    // enharmonic labels (two lines)
-    if (bw >= 16) {
-      const fs = Math.min(10, Math.max(7, Math.round(bw * 0.26)));
-      ctx.font = `${fs}px 'DM Mono', monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.fillText(BLACK_LABEL[i],  x + bw / 2, bh - fs - 3);
-      ctx.fillText(BLACK_LABEL2[i], x + bw / 2, bh - 2);
-    }
-  }
+  document.querySelectorAll('.piano-key-white, .piano-key-black').forEach(el => {
+    const pc = parseInt(el.dataset.pc, 10);
+    el.classList.toggle('pk-active', pc === activePc);
+    el.classList.toggle('pk-wrong',  pc === wrongPc);
+  });
 }
 
 function pianoClickHandler(e) {
-  const canvas = document.getElementById('piano');
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  const ww = canvas._ww || 1;
-  const bw = canvas._bw || 1;
-  const bh = canvas._bh || 1;
-
-  // Black keys first (only when click is in the upper portion)
-  if (y <= bh) {
-    for (let i = 0; i < 5; i++) {
-      const bx = Math.round(BLACK_OFFSET[i] * ww - bw / 2);
-      if (x >= bx && x <= bx + bw) {
-        const label = BLACK_LABEL[i] + '/' + BLACK_LABEL2[i];
-        drawPiano(BLACK_PC[i]);
-        handleButtonPress(BLACK_PC[i], label);
-        return;
-      }
-    }
-  }
-  // White keys
-  const idx = Math.min(Math.floor(x / ww), 6);
-  drawPiano(WHITE_PC[idx]);
-  handleButtonPress(WHITE_PC[idx], WHITE_LABEL[idx]);
+  const key = e.target.closest('.piano-key-white, .piano-key-black');
+  if (!key) return;
+  const pc = parseInt(key.dataset.pc, 10);
+  const label = key.dataset.label || key.querySelector('.pk-label').textContent;
+  drawPiano(pc);
+  handleButtonPress(pc, label);
 }
 
 function goBack() {
@@ -1072,6 +1079,7 @@ function redrawCurrent() {
 window.addEventListener('resize', redrawCurrent);
 
 document.getElementById('piano').addEventListener('click', pianoClickHandler);
+// resize listener no longer needs to redraw the piano (CSS handles layout)
 
 buildStreakPips();
 connectMidi(true); // auto-connect on load if permission already granted
