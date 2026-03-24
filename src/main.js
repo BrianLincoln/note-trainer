@@ -161,8 +161,11 @@ document.getElementById('start-btn').addEventListener('click', () => {
 // ── Back from game ───────────────────────────────────────────
 document.querySelector('#screen-game .back-btn').addEventListener('click', () => {
   currentExerciseModule?.stopGame();
-  showScreen('setup');
+  showSetupFor(currentExercise);
 });
+
+// ── Back from setup → home ───────────────────────────────────
+document.getElementById('setup-home-btn').addEventListener('click', () => showScreen('home'));
 
 // ── Summary buttons ──────────────────────────────────────────
 document.getElementById('summary-menu-btn').addEventListener('click', () => showScreen('home'));

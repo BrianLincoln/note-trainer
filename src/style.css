@@ -42,6 +42,21 @@
     max-width: 560px;
     width: 100%;
   }
+  .back-link {
+    display: inline-block;
+    font-size: 11px;
+    color: var(--ink3);
+    background: none;
+    border: none;
+    padding: 0;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--ink); }
+
   .setup-title {
     font-family: 'DM Serif Display', serif;
     font-size: 32px;
