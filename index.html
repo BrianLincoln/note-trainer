@@ -566,6 +566,7 @@ let midiConnected = false;
 let currentNote = null;
 let correct = 0, wrong = 0, streak = 0, questionCount = 0, bestStreak = 0;
 let waitingForNext = false;
+let lastPlayedPc = -1;
 let audioCtx = null;
 
 // ── Setup ──────────────────────────────────────────────────
@@ -635,6 +636,7 @@ function handleButtonPress(pitchClass, label) {
   if (currentNote.midi % 12 === pitchClass) {
     handleCorrect();
   } else {
+    lastPlayedPc = pitchClass;
     handleWrong(label);
   }
 }
@@ -647,7 +649,7 @@ const BLACK_PC     = [1, 3, 6, 8, 10];
 const BLACK_LABEL  = ['C♯','D♯','F♯','G♯','A♯'];
 const BLACK_LABEL2 = ['D♭','E♭','G♭','A♭','B♭'];
 
-function drawPiano(activePc = -1) {
+function drawPiano(activePc = -1, wrongPc = -1) {
   const canvas = document.getElementById('piano');
   if (!canvas) return;
   const wrap = canvas.parentElement;
@@ -672,14 +674,16 @@ function drawPiano(activePc = -1) {
   const labelCol   = dark ? '#2a2818' : '#3a3830';    // dark text on light keys
   const bLabelCol  = dark ? '#9a9890' : '#9a9490';    // light text on dark keys
   const accentCol = dark ? '#7ab88a' : '#2d5a3d';
+  const wrongCol  = dark ? '#c97060' : '#c0392b';
 
   // White keys — round each key edge independently so they sum exactly to W
   for (let i = 0; i < 7; i++) {
     const x  = Math.round(i * ww);
     const x1 = Math.round((i + 1) * ww);
     const kw = x1 - x; // actual pixel width of this key
-    const active = WHITE_PC[i] === activePc;
-    ctx.fillStyle = active ? accentCol : whiteFill;
+    const active  = WHITE_PC[i] === activePc;
+    const isWrong = WHITE_PC[i] === wrongPc;
+    ctx.fillStyle = isWrong ? wrongCol : (active ? accentCol : whiteFill);
     ctx.fillRect(x, 0, kw, wh);
     // right-edge separator (skip on last key)
     if (i < 6) {
@@ -691,7 +695,7 @@ function drawPiano(activePc = -1) {
       ctx.stroke();
     }
     // note label
-    ctx.fillStyle = active ? 'rgba(255,255,255,0.75)' : labelCol;
+    ctx.fillStyle = (active || isWrong) ? 'rgba(255,255,255,0.85)' : labelCol;
     ctx.font = `${Math.min(18, Math.max(9, Math.round(ww * 0.22)))}px 'DM Mono', monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
@@ -701,11 +705,12 @@ function drawPiano(activePc = -1) {
   // Black keys
   for (let i = 0; i < 5; i++) {
     const x = Math.round(BLACK_OFFSET[i] * ww - bw / 2);
-    const active = BLACK_PC[i] === activePc;
-    ctx.fillStyle = active ? accentCol : blackFill;
+    const active  = BLACK_PC[i] === activePc;
+    const isWrong = BLACK_PC[i] === wrongPc;
+    const bFill = isWrong ? wrongCol : (active ? accentCol : blackFill);
+    ctx.fillStyle = bFill;
     ctx.fillRect(x, 0, bw, bh);
     // round the bottom corners slightly
-    ctx.fillStyle = active ? accentCol : blackFill;
     ctx.fillRect(x, bh - 6, bw, 6);
     // enharmonic labels (two lines)
     if (bw >= 16) {
@@ -713,7 +718,7 @@ function drawPiano(activePc = -1) {
       ctx.font = `${fs}px 'DM Mono', monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
-      ctx.fillStyle = active ? 'rgba(255,255,255,0.85)' : bLabelCol;
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.fillText(BLACK_LABEL[i],  x + bw / 2, bh - fs - 3);
       ctx.fillText(BLACK_LABEL2[i], x + bw / 2, bh - 2);
     }
@@ -815,6 +820,7 @@ function onMidi(event) {
   if (isCorrect) {
     handleCorrect();
   } else {
+    lastPlayedPc = note % 12;
     handleWrong(playedLabel);
   }
 }
@@ -852,6 +858,16 @@ function handleWrong(played) {
   playWrongSound();
   setFeedback('✗  you played ' + played + ' — this is ' + currentNote.name, 'wrong');
   waitingForNext = true;
+
+  // Visual feedback: wrong key red, correct key flickers green
+  const correctPc = currentNote.midi % 12;
+  const wpc = lastPlayedPc;
+  drawPiano(correctPc, wpc);
+  setTimeout(() => drawPiano(-1, wpc),        300);
+  setTimeout(() => drawPiano(correctPc, wpc), 600);
+  setTimeout(() => drawPiano(-1, wpc),        900);
+  setTimeout(() => drawPiano(correctPc, wpc), 1200);
+
   const done = questionLimit && questionCount >= questionLimit;
   setTimeout(done ? showSummary : nextNote, 1800);
 }
@@ -916,7 +932,7 @@ function playWrongSound() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const t = audioCtx.currentTime;
     // Two descending "duh duh" notes — E4 then C#4 (minor third), sawtooth for buzz
-    [[330, 0], [277, 0.19]].forEach(([freq, delay]) => {
+    [[110, 0], [92.5, 0.19]].forEach(([freq, delay]) => {
       const osc  = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
