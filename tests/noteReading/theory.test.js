@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { midiNoteName, midiFullName, getPool } from '../src/theory.js';
-import { BASS, TREBLE, BASS_ACC, TREBLE_ACC, BASS_FLAT, TREBLE_FLAT } from '../src/notes.js';
+import { midiNoteName, midiFullName, getPool } from '../../src/noteReading/theory.js';
+import { BASS, TREBLE, BASS_ACC, TREBLE_ACC, BASS_FLAT, TREBLE_FLAT } from '../../src/noteReading/notes.js';
 
 // ── midiNoteName ─────────────────────────────────────────────────────────────
 

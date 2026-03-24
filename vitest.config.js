@@ -6,7 +6,12 @@ export default defineConfig({
     include: ['tests/**/*.test.js'],
     coverage: {
       provider: 'v8',
-      include: ['src/theory.js', 'src/gameState.js', 'src/notes.js'],
+      include: [
+        'src/noteReading/theory.js',
+        'src/noteReading/notes.js',
+        'src/shared/gameState.js',
+        'src/keySignatures/data.js',
+      ],
       thresholds: {
         lines: 90,
         functions: 100,

@@ -8,8 +8,28 @@
 </head>
 <body>
 
+<!-- Home Screen -->
+<div class="screen active" id="screen-home">
+  <div class="setup-card">
+    <h1 class="setup-title">Note<br>Trainer</h1>
+    <p class="setup-sub">choose an exercise</p>
+    <div class="exercise-options">
+      <button class="exercise-btn" id="ex-note-reading">
+        <span class="exercise-icon">𝄞</span>
+        <span class="exercise-name">Note Reading</span>
+        <span class="exercise-desc">identify notes on the staff</span>
+      </button>
+      <button class="exercise-btn" id="ex-key-sig">
+        <span class="exercise-icon">♯♭</span>
+        <span class="exercise-name">Key Signatures</span>
+        <span class="exercise-desc">name the key from its signature</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Setup Screen -->
-<div class="screen active" id="screen-setup">
+<div class="screen" id="screen-setup">
   <div class="setup-card">
     <h1 class="setup-title">Note<br>Trainer</h1>
     <p class="setup-sub">sight reading · staff drill</p>
@@ -35,9 +55,20 @@
       <button class="clef-btn" id="count-inf">∞</button>
     </div>
 
-    <div class="toggle-row">
-      <span class="toggle-label">sharps &amp; flats</span>
-      <span class="toggle-switch" id="acc-toggle"></span>
+    <div class="setup-section setup-section--note-reading">
+      <div class="toggle-row">
+        <span class="toggle-label">sharps &amp; flats</span>
+        <span class="toggle-switch" id="acc-toggle"></span>
+      </div>
+    </div>
+
+    <div class="setup-section setup-section--key-sig hidden">
+      <p class="setup-label">Key scope</p>
+      <div class="scope-options">
+        <button class="clef-btn selected" id="scope-sharps">sharps</button>
+        <button class="clef-btn" id="scope-flats">flats</button>
+        <button class="clef-btn" id="scope-both">both</button>
+      </div>
     </div>
 
     <p class="setup-label">MIDI keyboard</p>
@@ -137,8 +168,8 @@
       </div>
     </div>
     <div class="summary-btn-row">
-      <button class="secondary-btn">← menu</button>
-      <button class="start-btn">play again →</button>
+      <button class="secondary-btn" id="summary-menu-btn">← menu</button>
+      <button class="start-btn" id="summary-again-btn">play again →</button>
     </div>
   </div>
 </div>

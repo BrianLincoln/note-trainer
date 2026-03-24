@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialState, applyCorrect, applyWrong, isSessionDone, summaryStats } from '../src/gameState.js';
+import { initialState, applyCorrect, applyWrong, isSessionDone, summaryStats } from '../../src/shared/gameState.js';
 
 // ── initialState ──────────────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { BASS, TREBLE, BASS_ACC, TREBLE_ACC, BASS_FLAT, TREBLE_FLAT } from '../src/notes.js';
+import { BASS, TREBLE, BASS_ACC, TREBLE_ACC, BASS_FLAT, TREBLE_FLAT } from '../../src/noteReading/notes.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
