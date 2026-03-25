@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Note Trainer — Free Music Reading Practice</title>
+<title>Learn to Read Music Notes Faster | Note Trainer</title>
+<meta name="description" content="Free interactive music reading practice — identify notes on the staff, master key signatures, and build your skills with instant feedback.">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./assets/style-CkzBm7G4.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/style-DZW2oO5R.css">
+  <script type="module" crossorigin src="./assets/style-DeieDJKZ.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/style-DmVyKJ6t.css">
 </head>
 <body>
 
@@ -18,24 +19,66 @@
   </div>
 </nav>
 
-<div class="screen active" id="screen-home">
-  <div class="setup-card">
-    <h1 class="setup-title">Note<br>Trainer</h1>
-    <p class="setup-sub">choose an exercise</p>
-    <div class="exercise-options">
-      <a href="./note-reading/" class="exercise-btn">
-        <span class="exercise-icon">𝄞</span>
-        <span class="exercise-name">Note Reading</span>
-        <span class="exercise-desc">identify notes on the staff</span>
+<main class="home-page">
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>Learn to Read Music Notes Faster</h1>
+    <p class="hero-sub">Free interactive practice tools for the piano and beyond.</p>
+  </section>
+
+  <!-- Exercise Cards -->
+  <section class="ex-cards" aria-label="Exercises">
+    <a href="./note-reading/" class="ex-card">
+      <div class="ex-card-icon-area">𝄞</div>
+      <div class="ex-card-body">
+        <h2 class="ex-card-title">Note Reading Practice</h2>
+        <p class="ex-card-desc">Identify notes on the treble and bass clef with instant feedback.</p>
+        <span class="ex-card-cta">Start practising →</span>
+      </div>
+    </a>
+    <a href="./key-signatures/" class="ex-card">
+      <div class="ex-card-icon-area">♯♭</div>
+      <div class="ex-card-body">
+        <h2 class="ex-card-title">Key Signature Quiz</h2>
+        <p class="ex-card-desc">Master your sharps and flats with the circle of fifths.</p>
+        <span class="ex-card-cta">Start quizzing →</span>
+      </div>
+    </a>
+  </section>
+
+  <!-- How to Start -->
+  <section class="how-to-start">
+    <h2 class="section-heading">How to Start</h2>
+    <ol class="steps-list">
+      <li>Choose an exercise above.</li>
+      <li>Connect a MIDI keyboard or use your screen.</li>
+      <li>Build your daily streak.</li>
+    </ol>
+  </section>
+
+  <!-- Knowledge Base -->
+  <section class="knowledge-base">
+    <h2 class="section-heading">Knowledge Base</h2>
+    <div class="kb-links">
+      <a href="./note-reading/how-to-read-treble-clef.html" class="kb-card">
+        <span class="kb-icon">𝄞</span>
+        <div>
+          <p class="kb-title">How to Read Treble Clef</p>
+          <p class="kb-desc">Lines, spaces, ledger lines, and mnemonics for beginners.</p>
+        </div>
       </a>
-      <a href="./key-signatures/" class="exercise-btn">
-        <span class="exercise-icon">♯♭</span>
-        <span class="exercise-name">Key Signatures</span>
-        <span class="exercise-desc">name the key from its signature</span>
+      <a href="./key-signatures/circle-of-fifths-chart.html" class="kb-card">
+        <span class="kb-icon">◎</span>
+        <div>
+          <p class="kb-title">Circle of Fifths Chart</p>
+          <p class="kb-desc">All 12 keys, sharp and flat orders, and relative minors.</p>
+        </div>
       </a>
     </div>
-  </div>
-</div>
+  </section>
+
+</main>
 
 </body>
 </html>
