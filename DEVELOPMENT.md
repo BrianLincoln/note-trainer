@@ -28,7 +28,21 @@ Before pushing to `main`:
 5. **Mobile layout:** Open `npm run preview` at 375px viewport — the HTML/CSS div piano and staff canvas are not clipped and render correctly.
 6. **Dark mode:** Verify the staff canvas renders correctly in `prefers-color-scheme: dark`.
 
-## 4. Deployment Flow
+## 4. Adding a New Page
+
+The project uses Vite's multi-page architecture. Every HTML file that should be bundled must be registered as an entry point in `vite.config.js`:
+
+```js
+rollupOptions: {
+  input: {
+    myPage: resolve(__dirname, 'my-page/index.html'),
+  },
+},
+```
+
+Without this entry, the page works in dev (`vite`) but is excluded from the production build (`vite build`).
+
+## 5. Deployment Flow
 
 Deployment is fully automated via GitHub Actions on push to `main`.
 
