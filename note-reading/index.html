@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learn to Read Music Notes | Note Trainer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="../assets/noteReading-CtsLsH-h.js"></script>
+  <link rel="modulepreload" crossorigin href="../assets/style-CkzBm7G4.js">
+  <link rel="modulepreload" crossorigin href="../assets/midi-Dsukrshh.js">
+  <link rel="stylesheet" crossorigin href="../assets/style-DZW2oO5R.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="../" class="nav-logo">Note Trainer</a>
+  <div class="nav-links">
+    <a href="./" class="nav-active">Note Reading</a>
+    <a href="../key-signatures/">Key Signatures</a>
+    <a href="./how-to-read-treble-clef.html">How to Read Treble Clef</a>
+  </div>
+</nav>
+
+<!-- Setup Screen -->
+<div class="screen active" id="screen-setup">
+  <div class="setup-card">
+    <button class="back-link" id="setup-home-btn">← home</button>
+    <h1 class="setup-title">Note<br>Reading</h1>
+    <p class="setup-sub">sight reading · staff drill</p>
+
+    <p class="setup-label">Clef</p>
+    <div class="clef-options">
+      <button class="clef-btn selected" id="clef-treble">
+        <span class="clef-symbol">𝄞</span>treble
+      </button>
+      <button class="clef-btn" id="clef-bass">
+        <span class="clef-symbol">𝄢</span>bass
+      </button>
+      <button class="clef-btn" id="clef-both">
+        <span class="clef-symbol">𝄞𝄢</span>both
+      </button>
+    </div>
+
+    <p class="setup-label">Questions</p>
+    <div class="count-options">
+      <button class="clef-btn" id="count-5">5</button>
+      <button class="clef-btn selected" id="count-10">10</button>
+      <button class="clef-btn" id="count-20">20</button>
+      <button class="clef-btn" id="count-inf">∞</button>
+    </div>
+
+    <div class="setup-section">
+      <div class="toggle-row">
+        <span class="toggle-label">sharps &amp; flats</span>
+        <span class="toggle-switch" id="acc-toggle"></span>
+      </div>
+    </div>
+
+    <div class="toggle-row" id="note-names-row">
+      <span class="toggle-label">show note names</span>
+      <span class="toggle-switch on" id="note-names-toggle"></span>
+    </div>
+
+    <p class="setup-label">MIDI keyboard</p>
+    <div class="midi-section">
+      <div class="midi-row">
+        <span class="midi-name" id="midi-name">not connected</span>
+        <span class="midi-dot" id="midi-dot"></span>
+      </div>
+      <button class="connect-link">connect keyboard →</button>
+    </div>
+
+    <div class="toggle-row" id="octave-row" style="display:none">
+      <span class="toggle-label">match octave</span>
+      <span class="toggle-switch" id="octave-toggle"></span>
+    </div>
+
+    <button class="start-btn" id="start-btn">start →</button>
+  </div>
+</div>
+
+<!-- Game Screen -->
+<div class="screen" id="screen-game">
+  <div class="game-wrap">
+    <div class="top-bar">
+      <button class="back-btn">← back</button>
+      <span class="q-counter" id="q-counter"></span>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-n" id="s-streak">0</div>
+          <div class="stat-l">streak</div>
+        </div>
+        <div class="stat">
+          <div class="stat-n" id="s-correct">0</div>
+          <div class="stat-l">correct</div>
+        </div>
+        <div class="stat">
+          <div class="stat-n" id="s-wrong">0</div>
+          <div class="stat-l">wrong</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="staff-card">
+      <p class="clef-tag" id="clef-tag">bass clef</p>
+      <canvas id="staff"></canvas>
+      <div class="reveal-row">
+        <span class="note-name-reveal" id="note-reveal"></span>
+        <span class="octave-hint" id="octave-hint"></span>
+      </div>
+    </div>
+
+    <div class="feedback-bar" id="feedback">play the note shown above</div>
+
+    <div class="streak-bar" id="streak-bar"></div>
+
+  </div>
+  <div class="piano-wrap" id="piano">
+    <div class="piano-white-keys">
+      <div class="piano-key-white" data-pc="0"><span class="pk-label">C</span></div>
+      <div class="piano-key-white" data-pc="2"><span class="pk-label">D</span></div>
+      <div class="piano-key-white" data-pc="4"><span class="pk-label">E</span></div>
+      <div class="piano-key-white" data-pc="5"><span class="pk-label">F</span></div>
+      <div class="piano-key-white" data-pc="7"><span class="pk-label">G</span></div>
+      <div class="piano-key-white" data-pc="9"><span class="pk-label">A</span></div>
+      <div class="piano-key-white" data-pc="11"><span class="pk-label">B</span></div>
+    </div>
+    <div class="piano-black-keys">
+      <div class="piano-key-black" data-pc="1"  data-label="C♯/D♭" style="left:calc(1/7*100% - 5%);width:10%;"><span class="pk-label">C♯</span><span class="pk-label">D♭</span></div>
+      <div class="piano-key-black" data-pc="3"  data-label="D♯/E♭" style="left:calc(2/7*100% - 5%);width:10%;"><span class="pk-label">D♯</span><span class="pk-label">E♭</span></div>
+      <div class="piano-key-black" data-pc="6"  data-label="F♯/G♭" style="left:calc(4/7*100% - 5%);width:10%;"><span class="pk-label">F♯</span><span class="pk-label">G♭</span></div>
+      <div class="piano-key-black" data-pc="8"  data-label="G♯/A♭" style="left:calc(5/7*100% - 5%);width:10%;"><span class="pk-label">G♯</span><span class="pk-label">A♭</span></div>
+      <div class="piano-key-black" data-pc="10" data-label="A♯/B♭" style="left:calc(6/7*100% - 5%);width:10%;"><span class="pk-label">A♯</span><span class="pk-label">B♭</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Summary Screen -->
+<div class="screen" id="screen-summary">
+  <div class="setup-card">
+    <p class="setup-sub" style="margin-bottom:0">session complete</p>
+    <div class="summary-score">
+      <span class="summary-big" id="sum-score">—</span>
+      <span class="summary-unit" id="sum-pct"></span>
+    </div>
+    <div class="summary-stats">
+      <div class="summary-stat">
+        <div class="stat-n" id="sum-correct">0</div>
+        <div class="stat-l">correct</div>
+      </div>
+      <div class="summary-stat">
+        <div class="stat-n" id="sum-wrong">0</div>
+        <div class="stat-l">wrong</div>
+      </div>
+      <div class="summary-stat">
+        <div class="stat-n" id="sum-streak">0</div>
+        <div class="stat-l">best streak</div>
+      </div>
+    </div>
+    <div class="summary-btn-row">
+      <button class="secondary-btn" id="summary-menu-btn">← menu</button>
+      <button class="start-btn" id="summary-again-btn">play again →</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
